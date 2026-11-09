@@ -18,28 +18,42 @@ client = boto3.client(
 # Select model
 MODEL_ID = "moonshotai.kimi-k2.5"
 
-txt = input("Ask me anything")
+# System prompt
+system_prompts = [
+    {
+        "text": "You are KherowalAI, a helpful, intelligent AI assistant. Whenever asked who you are, always identify yourself as KherowalAI."
+    }
+]
+
+txt = input("Ask me anything: ")
 
 # Make request
-response = client.converse(
-    modelId=MODEL_ID,
-    messages=[
-        {
-            "role": "user",
-            "content": [
-                {
-                    "text": txt
-                }
-            ]
+try:
+    response = client.converse(
+        modelId=MODEL_ID,
+        system=system_prompts,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "text": txt or "Hello!"
+                    }
+                ]
+            }
+        ],
+        inferenceConfig={
+            "maxTokens": 500,
+            "temperature": 0.7
         }
-    ],
-    inferenceConfig={
-        "maxTokens": 500,
-        "temperature": 0.7
-    }
-)
+    )
 
-# Extract response
-answer = response["output"]["message"]["content"][0]["text"]
+    # Extract response
+    answer = response["output"]["message"]["content"][0]["text"]
+    print("\nResponse:")
+    print(answer)
 
-print(answer)
+except Exception as e:
+    print(f"\nAPI Call Failed: {e}")
+    if "not allowed by policy" in str(e):
+        print("\nFix: Go to AWS Bedrock Console > 'Model access', and enable access for this model.")
